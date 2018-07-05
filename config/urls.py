@@ -4,14 +4,12 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views import defaults as default_views
+from rest_framework_jwt.views import obtain_jwt_token
+from django.conf.urls import url
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
-    path(
-        "about/",
-        TemplateView.as_view(template_name="pages/about.html"),
-        name="about",
-    ),
+    url(r'^rest-auth/', include('rest_auth.urls')),
+    url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
@@ -22,6 +20,10 @@ urlpatterns = [
     path(
         "images/",
         include("nomad_coders.images.urls", namespace="images"),
+    ),
+    path(
+        "notifications/",
+        include("nomad_coders.notifications.urls", namespace="notifications"),
     ),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
