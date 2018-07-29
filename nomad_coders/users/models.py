@@ -32,7 +32,7 @@ class User(AbstractUser):
         return self.images.all().count()
 
     @property
-    def follower_count(self):
+    def followers_count(self):
         return self.followers.all().count()
     
     @property

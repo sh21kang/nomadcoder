@@ -1,6 +1,7 @@
 from django.db import models
 from nomad_coders.users import models as user_models
 from taggit.managers import TaggableManager
+from django.contrib.humanize.templatetags.humanize import naturaltime
 # Create your models here.
 
 
@@ -36,6 +37,17 @@ class Image(TimeStampedModel) :
     def comment_count(self):
         return self.comments.all().count()
 
+    @property
+    def natural_time(self):
+        return naturaltime(self.create_at)
+    
+    @property
+    def is_vertical(self):
+        if self.file.width < self.file.height:
+            return True
+        else:
+            return False
+            
     class Meta:
         ordering = ['-create_at']
 

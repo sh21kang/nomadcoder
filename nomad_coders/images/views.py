@@ -26,7 +26,7 @@ class Images(APIView):
             image_list.append(image)
 
         sorted_list = sorted(image_list, key=get_key, reverse=True)
-        serializer =serializers.ImageSerializer( sorted_list,many=True)
+        serializer =serializers.ImageSerializer( sorted_list,many=True, context={'request': request})
 
 
         print(sorted_list)
@@ -56,7 +56,7 @@ class LikeImage(APIView):
         like_creator_ids = likes.values('creator_id')
         users = user_models.User.objects.filter(id__in=like_creator_ids)
 
-        serializer =user_serializers.ListUserSerializer(users, many=True)
+        serializer =user_serializers.ListUserSerializer(users, many=True, context={"request" : request})
 
         return Response(data=serializer.data, status =status.HTTP_200_OK)
         
@@ -152,20 +152,26 @@ class Search(APIView):
     
     def get(self, request, format=None):
 
-        hashtags =request.query_params.get('hashtags', None )
-        
-        if hashtags is not None:
-                
-            hashtags= hashtags.split(",")
+        hashtags = request.query_params.get('hashtags', None)
 
-            images= models.Image.objects.filter(
+        if hashtags is not None:
+
+            hashtags = hashtags.split(",")
+
+            images = models.Image.objects.filter(
                 tags__name__in=hashtags).distinct()
-            
-            serializer = serializers.CountImageSerializer(images, many=True)
+
+            serializer = serializers.ImageSerializer(
+                images, many=True, context={'request': request})
 
             return Response(data=serializer.data, status=status.HTTP_200_OK)
+
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+            images = models.Image.objects.all()[:20]
+            serializer = serializers.ImageSerializer(
+                images, many=True, context={'request': request})
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -201,7 +207,7 @@ class ImageDetail(APIView):
         except models.Image.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer= serializers.ImageSerializer(image)
+        serializer= serializers.ImageSerializer(image, context={'request': request})
 
         return Response(data = serializer.data , status=status.HTTP_200_OK)
 
@@ -210,7 +216,7 @@ class ImageDetail(APIView):
         image =self.find_own_image(image_id,user)
 
         if image is None:
-             return Response(data = serializer.data , status=status.HTTP_401_UNAUTHORIZED)
+             return Response(data = serializer.data , status=status.HTTP_400_BAD_REQUEST)
             
 
         serializer = serializers.InputImageSerializer(image, data =request.data, partial=True)
@@ -227,7 +233,7 @@ class ImageDetail(APIView):
         image =self.find_own_image(image_id,user)
 
         if image is None:
-             return Response(status=status.HTTP_401_UNAUTHORIZED)
+             return Response(status=status.HTTP_400_BAD_REQUEST)
         image.delete()
 
         return Response(status = status.HTTP_204_NO_CONTENT)
